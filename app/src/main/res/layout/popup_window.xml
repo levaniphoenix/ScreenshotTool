@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.levaniphoenix.app.ResizableLayout
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@null"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/resize"
+    android:layout_width="wrap_content"
+    android:layout_height="200dp"
+    android:animateLayoutChanges="true"
+    >
+
+    <RelativeLayout
+        android:id="@+id/border"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_transparent_border_0_nil_default" />
+
+    <com.levaniphoenix.app.Views.ResizeView
+        android:background="@null"
+        android:id="@+id/resize_view"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true" />
+</com.levaniphoenix.app.ResizableLayout>
