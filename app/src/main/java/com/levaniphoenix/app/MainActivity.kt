@@ -8,20 +8,24 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.widget.Button
 import androidx.appcompat.app.AppCompatActivity
 
 
 class MainActivity : AppCompatActivity() {
     private val REQUEST_SCREENSHOT=59706
     private lateinit var mgr : MediaProjectionManager
+    private lateinit var button : Button
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         checkOverlayPermission();
         mgr = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        startActivityForResult(mgr.createScreenCaptureIntent(),
-            REQUEST_SCREENSHOT);
+        button = findViewById(R.id.button)
+        button.setOnClickListener {
+            startActivityForResult(mgr.createScreenCaptureIntent(), REQUEST_SCREENSHOT);
+        }
         //startService();
     }
 

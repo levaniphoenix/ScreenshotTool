@@ -109,14 +109,6 @@ public class ResizeView extends LinearLayout implements GestureDetector.OnGestur
     @Override
     public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
     {
-        //Log.d(TAG,"onScroll");
-        //Log.d(TAG,String.format("distanceX %f", distanceX));
-        //Log.d(TAG,String.format("distanceY %f", distanceY));
-        //Log.d(TAG,params.toString());
-//        if (e1 == null || e2 == null){
-//            return false;
-//        }
-
         this.distanceX = this.distanceX + distanceX;
         this.distanceY = this.distanceY + distanceY;
         params.width = initialWidth - (int) this.distanceX;

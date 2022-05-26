@@ -2,12 +2,10 @@ package com.levaniphoenix.app
 
 import android.R
 import android.annotation.SuppressLint
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
+import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.ACTION_SHUTDOWN
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
@@ -17,7 +15,6 @@ import android.media.ImageReader
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
 import android.os.*
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.WindowManager
 import androidx.annotation.RequiresApi
@@ -41,6 +38,8 @@ class ForegroundService : Service(), ImageReader.OnImageAvailableListener {
     private var width = -1
     private var height = -1
     private var windowBorderSize = -1
+
+    private lateinit var window:Window
 
     private val handlerThread = HandlerThread(
         javaClass.simpleName,
@@ -68,7 +67,7 @@ class ForegroundService : Service(), ImageReader.OnImageAvailableListener {
         )
         // create an instance of Window class
         // and display the content on screen
-        val window = Window(this)
+        window = Window(this)
         window.open()
     }
 
@@ -76,66 +75,78 @@ class ForegroundService : Service(), ImageReader.OnImageAvailableListener {
         super.onDestroy()
         //todo clean up after service is done
         Log.d(TAG, "destroy foreground service")
-        System.exit(0)
+        window.close()
+        //System.exit(0)
     }
     @SuppressLint("WrongConstant")
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        val screenshotRequest = intent?.getIntExtra("screenshotRequest",-1)!!
-        if (screenshotRequest ==  1){
+        if(ACTION_SHUTDOWN.equals(intent?.getAction())){
+            stopForeground(true)
+            stopSelf()
+        }else {
 
-            val width = intent.getIntExtra("width",-1)
-            val height = intent.getIntExtra("height",-1)
-            val windowX = intent.getIntExtra("windowX",-1)
-            val windowY = intent.getIntExtra("windowY",-1)
-            windowBorderSize = intent.getIntExtra("borderSize",-1)
+            val screenshotRequest = intent?.getIntExtra("screenshotRequest", -1)!!
+            if (screenshotRequest == 1) {
 
-            Log.d(TAG, "got screen shot request")
-            val date: String = SimpleDateFormat("yyyy-MM-dd-hh-mm-ss", Locale.getDefault()).format(Date())
-            val file = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).toString(),date+".png")
-            saveScreenshot(file,width,height,windowX,windowY)
-            return super.onStartCommand(intent, flags, startId)
-        }
+                val width = intent.getIntExtra("width", -1)
+                val height = intent.getIntExtra("height", -1)
+                val windowX = intent.getIntExtra("windowX", -1)
+                val windowY = intent.getIntExtra("windowY", -1)
+                windowBorderSize = intent.getIntExtra("borderSize", -1)
 
-        resultCode = intent?.getIntExtra("resultCode",-1)!!
-        resultData = intent.getParcelableExtra<Intent>("resultIntent")!!
-
-        mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, resultData)
-
-        val cb: MediaProjection.Callback = object : MediaProjection.Callback() {
-            override fun onStop() {
-                vDisplay.release()
+                Log.d(TAG, "got screen shot request")
+                val date: String =
+                    SimpleDateFormat("yyyy-MM-dd-hh-mm-ss", Locale.getDefault()).format(Date())
+                val file = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                        .toString(), date + ".png"
+                )
+                saveScreenshot(file, width, height, windowX, windowY)
+                return super.onStartCommand(intent, flags, startId)
             }
+
+            resultCode = intent?.getIntExtra("resultCode", -1)!!
+            resultData = intent.getParcelableExtra<Intent>("resultIntent")!!
+
+            mediaProjectionManager =
+                getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+            mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, resultData)
+
+            val cb: MediaProjection.Callback = object : MediaProjection.Callback() {
+                override fun onStop() {
+                    vDisplay.release()
+                }
+            }
+            //todo make it api 14 complaint
+            val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            val metrics = windowManager.maximumWindowMetrics
+
+            width = metrics.bounds.width()
+            height = metrics.bounds.height()
+            val MAX_IMAGES = 10
+
+            mImageReader =
+                ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, MAX_IMAGES);
+
+
+            vDisplay = mediaProjection.createVirtualDisplay(
+                "screenshot",
+                width,
+                height,
+                resources.displayMetrics.densityDpi,
+                VIRT_DISPLAY_FLAGS,
+                mImageReader.getSurface(),
+                null,
+                null
+            )
+
+            handlerThread.start()
+            handler = Handler(handlerThread.looper)
+            mImageReader.setOnImageAvailableListener(this, handler)
+            mediaProjection.registerCallback(cb, null)
         }
-        //todo make it api 14 complaint
-        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        val metrics = windowManager.maximumWindowMetrics
-
-        width = metrics.bounds.width()
-        height = metrics.bounds.height()
-        val MAX_IMAGES = 10
-
-        mImageReader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, MAX_IMAGES);
-
-
-        vDisplay = mediaProjection.createVirtualDisplay(
-            "screenshot",
-            width,
-            height,
-            resources.displayMetrics.densityDpi,
-            VIRT_DISPLAY_FLAGS,
-            mImageReader.getSurface(),
-            null,
-            null
-        )
-
-        handlerThread.start()
-        handler = Handler(handlerThread.looper)
-        mImageReader.setOnImageAvailableListener(this,handler)
-        mediaProjection.registerCallback(cb, null)
-
         return super.onStartCommand(intent, flags, startId)
     }
 
@@ -154,12 +165,19 @@ class ForegroundService : Service(), ImageReader.OnImageAvailableListener {
         val manager =
             getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         manager.createNotificationChannel(chan)
+
         val notificationBuilder: NotificationCompat.Builder =
             NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+
+        notificationBuilder.addAction(
+            R.drawable.ic_dialog_info,
+            "ShutDown",
+            buildPendingIntent(ACTION_SHUTDOWN)
+        )
+
         val notification: Notification = notificationBuilder.setOngoing(true)
-            .setContentTitle("Service running")
-            .setContentText("Displaying over other apps") // this is important, otherwise the notification will show the way
-            // you want i.e. it will show some default notification
+            .setContentTitle("ScreenShotTool running")
+            .setContentText("double click on the botton right corner to take a screenshot")
             .setSmallIcon(R.drawable.ic_dialog_info)
             .setPriority(NotificationManager.IMPORTANCE_MIN)
             .setCategory(Notification.CATEGORY_SERVICE)
@@ -217,5 +235,10 @@ class ForegroundService : Service(), ImageReader.OnImageAvailableListener {
             result = resources.getDimensionPixelSize(resourceId)
         }
         return result
+    }
+    private fun buildPendingIntent(action: String): PendingIntent? {
+        val i = Intent(this, javaClass)
+        i.action = action
+        return PendingIntent.getService(this, 0, i, 0)
     }
 }

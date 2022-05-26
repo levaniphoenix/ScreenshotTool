@@ -98,11 +98,6 @@ class Window(  // declaring required variables
             mView.invalidate()
             // remove all views
             (mView.parent as ViewGroup).removeAllViews()
-
-
-
-            // the above steps are necessary when you are adding and removing
-            // the view simultaneously, it might give some exceptions
         } catch (e: Exception) {
             Log.d("Error2", e.toString())
         }
