@@ -1,6 +1,7 @@
 package com.levaniphoenix.app
 
 import android.R.attr
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.media.projection.MediaProjectionManager
@@ -9,6 +10,7 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.widget.Button
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 
 
@@ -16,6 +18,15 @@ class MainActivity : AppCompatActivity() {
     private val REQUEST_SCREENSHOT=59706
     private lateinit var mgr : MediaProjectionManager
     private lateinit var button : Button
+
+    private var resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            // There are no request codes
+            val data: Intent? = result.data
+            startService(REQUEST_SCREENSHOT,result.resultCode,data)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -24,7 +35,8 @@ class MainActivity : AppCompatActivity() {
         mgr = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         button = findViewById(R.id.button)
         button.setOnClickListener {
-            startActivityForResult(mgr.createScreenCaptureIntent(), REQUEST_SCREENSHOT);
+//            startActivityForResult(mgr.createScreenCaptureIntent(), REQUEST_SCREENSHOT);
+            resultLauncher.launch(mgr.createScreenCaptureIntent())
         }
         //startService();
     }
@@ -41,8 +53,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode === REQUEST_SCREENSHOT) {
-            if (resultCode === RESULT_OK) {
+        if (requestCode == REQUEST_SCREENSHOT) {
+            if (resultCode == RESULT_OK) {
 
                 startService(requestCode,resultCode,data)
             }
@@ -65,8 +77,6 @@ class MainActivity : AppCompatActivity() {
                     startService(intent)
                 }
             }
-        } else {
-            startService(intent)
         }
     }
 

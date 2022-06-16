@@ -2,7 +2,6 @@ package com.levaniphoenix.app.Views;
 
 import static android.content.Context.WINDOW_SERVICE;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import androidx.core.view.GestureDetectorCompat;
 import android.util.AttributeSet;
@@ -15,19 +14,20 @@ import android.view.ViewTreeObserver;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
-public class ResizeView extends LinearLayout implements GestureDetector.OnGestureListener, GestureDetector.OnDoubleTapListener
+public class ResizeView extends LinearLayout implements View.OnTouchListener
 {
     protected Context context;
-    private GestureDetectorCompat mDetector;
     protected WindowManager windowManager;
     protected ViewGroup.LayoutParams params;
     protected WindowManager.LayoutParams windowLayoutParams;
     protected View rootView;
-    protected int initialWidth;
-    protected int initialHeight;
-    protected float distanceX = 0f;
-    protected float distanceY= 0f;
+    protected int rootWidth;
+    protected int rootHeight;
     private static final String TAG = ResizeView.class.getName();
+
+    private long mParamUpdateTimer = System.currentTimeMillis();
+    private int mDX;
+    private int mDY;
 
     public ResizeView(Context context)
     {
@@ -49,105 +49,55 @@ public class ResizeView extends LinearLayout implements GestureDetector.OnGestur
 
     private void init(Context context)
     {
-        mDetector = new GestureDetectorCompat(context, this);
-        mDetector.setOnDoubleTapListener(this);
         this.context = context;
         windowManager = (WindowManager) this.context.getSystemService(WINDOW_SERVICE);
+        this.setOnTouchListener(this);
     }
 
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-    }
-
-    @SuppressLint("ClickableViewAccessibility")
-    @Override
-    public boolean onTouchEvent(MotionEvent e)
-    {
-        mDetector.onTouchEvent(e);
-
-        Log.d(TAG,"onTouchEvent");
-
-        return true;
-    }
-
-    @Override
-    public boolean onSingleTapConfirmed(MotionEvent e)
-    {
-        return false;
-    }
-
-    @Override
-    public boolean onDoubleTap(MotionEvent e)
-    {
-        return false;
-    }
-
-    @Override
-    public boolean onDoubleTapEvent(MotionEvent e)
-    {
-        return false;
-    }
-
-    @Override
-    public boolean onDown(MotionEvent e)
-    {
-        return false;
-    }
-
-    @Override
-    public void onShowPress(MotionEvent e)
-    {
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent e)
-    {
-        return false;
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
-    {
-        this.distanceX = this.distanceX + distanceX;
-        this.distanceY = this.distanceY + distanceY;
-        params.width = initialWidth - (int) this.distanceX;
-        params.height = initialHeight - (int) this.distanceY;
-
-        Log.d(TAG,String.format("setting width and height %d %d", params.width ,params.height));
-        Log.d(TAG,String.format("position %d %d", windowLayoutParams.x ,windowLayoutParams.y));
-        //todo fix box bounds
-        //fixBoxBounds();
-        windowManager.updateViewLayout(rootView, params);
-        return true;
-    }
-
-    @Override
-    public void onLongPress(MotionEvent e)
-    {
-        Log.d(TAG, "long press");
-    }
-
-    @Override
-    public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
-    {
-        return false;
-    }
+//    @SuppressLint("ClickableViewAccessibility")
+//    @Override
+//    public boolean onTouchEvent(MotionEvent e)
+//    {
+//        mDetector.onTouchEvent(e);
+//        Log.d(TAG,"onTouchEvent");
+//
+//        return true;
+//    }
     public void passView(View rootView){
         this.rootView = rootView;
         params = rootView.getLayoutParams();
-        initialWidth = rootView.getWidth();
-        initialHeight = rootView.getHeight();
         rootView.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
                 rootView.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                initialHeight = rootView.getHeight();
-                initialWidth = rootView.getWidth();
+                rootHeight = rootView.getHeight();
+                rootWidth = rootView.getWidth();
             }
         });
     }
     public void passWindowsLayout(WindowManager.LayoutParams windowLayoutParams){
         this.windowLayoutParams = windowLayoutParams;
+    }
+
+    @Override
+    public boolean onTouch(View v, MotionEvent event) {
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                mDX = rootWidth - (int) event.getRawX();
+                mDY = rootHeight - (int) event.getRawY();
+                return true;
+            case MotionEvent.ACTION_MOVE:
+                params.width = mDX + (int) event.getRawX();
+                params.height = mDY + (int) event.getRawY();
+                long currTime = System.currentTimeMillis();
+                if (currTime - mParamUpdateTimer > 50) {
+                    mParamUpdateTimer = currTime;
+                    windowManager.updateViewLayout(rootView, params);
+                    rootHeight = params.height;
+                    rootWidth = params.width;
+                }
+                return true;
+        }
+        return false;
     }
 }

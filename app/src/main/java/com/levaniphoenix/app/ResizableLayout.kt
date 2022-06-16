@@ -15,10 +15,9 @@ import androidx.core.content.ContextCompat.startActivity
 import androidx.core.view.GestureDetectorCompat
 import java.io.File
 
-class ResizableLayout : RelativeLayout,View.OnTouchListener, GestureDetector.OnDoubleTapListener, GestureDetector.OnGestureListener  {
+class ResizableLayout : RelativeLayout  {
 
     //todo make double tap work on the whole view
-    private lateinit var mDetector: GestureDetectorCompat
     private var windowLayoutParams: WindowManager.LayoutParams? = null
     private lateinit var mContext: Context
     private val windowBorderSizeDp = 2
@@ -34,8 +33,6 @@ class ResizableLayout : RelativeLayout,View.OnTouchListener, GestureDetector.OnD
 
     fun init(context: Context?) {
         mContext = context!!
-        mDetector = GestureDetectorCompat(context, this)
-        mDetector.setOnDoubleTapListener(this)
 
     }
 
@@ -45,80 +42,6 @@ class ResizableLayout : RelativeLayout,View.OnTouchListener, GestureDetector.OnD
     }
     private var dragHandle: View? = null
 
-    override fun onInterceptTouchEvent(motionEvent: MotionEvent): Boolean {
-        onTouch(this, motionEvent)
-        return false
-    }
-
-    override fun onTouch(view: View, motionEvent: MotionEvent): Boolean {
-    mDetector.onTouchEvent(motionEvent)
-    Log.d(TAG, "onTouchEvent")
-    return true
-    }
-
-    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
-        return false
-    }
-
-    override fun onDoubleTap(e: MotionEvent?): Boolean {
-        Log.d(TAG,"taking a screenshot")
-        Log.d(TAG,rootView.width.toString())
-        val intent = Intent(
-            context,
-            ForegroundService::class.java
-        )
-        intent.putExtra("screenshotRequest", 1)
-        intent.putExtra("width", rootView.width)
-        intent.putExtra("height", rootView.height)
-        intent.putExtra("windowX", windowLayoutParams!!.x)
-        intent.putExtra("windowY", windowLayoutParams!!.y)
-        intent.putExtra("borderSize", dpToPx(mContext, windowBorderSizeDp))
-        context.startService(intent)
-
-        val relativeLayout = findViewById<RelativeLayout>(R.id.border)
-        val animation = AnimationUtils.loadAnimation(mContext,R.anim.fade_repeat)
-        relativeLayout.startAnimation(animation)
-        return true
-    }
-
-    override fun onDoubleTapEvent(e: MotionEvent?): Boolean {
-        Log.d(TAG,"on single tap")
-        return false
-    }
-
-    override fun onDown(e: MotionEvent?): Boolean {
-        return false
-    }
-
-    override fun onShowPress(e: MotionEvent?) {
-
-    }
-
-    override fun onSingleTapUp(e: MotionEvent?): Boolean {
-        return false
-    }
-
-    override fun onScroll(
-        e1: MotionEvent?,
-        e2: MotionEvent?,
-        distanceX: Float,
-        distanceY: Float
-    ): Boolean {
-        return false
-    }
-
-    override fun onLongPress(e: MotionEvent?) {
-
-    }
-
-    override fun onFling(
-        e1: MotionEvent?,
-        e2: MotionEvent?,
-        velocityX: Float,
-        velocityY: Float
-    ): Boolean {
-        return false
-    }
     private fun openScreenshot(imageFile: File) {
         val intent = Intent()
         intent.action = Intent.ACTION_VIEW
@@ -128,10 +51,5 @@ class ResizableLayout : RelativeLayout,View.OnTouchListener, GestureDetector.OnD
     }
     fun passWindowsLayout(windowLayoutParams: WindowManager.LayoutParams?) {
         this.windowLayoutParams = windowLayoutParams
-    }
-    fun dpToPx(context: Context, dp: Int): Int
-    {
-        val displayMetrics = context.resources.displayMetrics
-        return Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT))
     }
 }

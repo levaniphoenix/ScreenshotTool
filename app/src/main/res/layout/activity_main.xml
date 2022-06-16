@@ -23,7 +23,7 @@
         android:id="@+id/textView2"
         android:layout_width="330dp"
         android:layout_height="wrap_content"
-        android:text="After hitting start, double click on the bottom right corner of the popout window to take a screenshot"
+        android:text="After hitting start, double click on the popout window to take a screenshot"
         android:textSize="20sp"
         android:gravity="center"
         app:layout_constraintBottom_toBottomOf="parent"

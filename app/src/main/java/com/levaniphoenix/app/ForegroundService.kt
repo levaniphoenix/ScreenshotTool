@@ -86,66 +86,67 @@ class ForegroundService : Service(), ImageReader.OnImageAvailableListener {
             stopForeground(true)
             stopSelf()
         }else {
+            if(intent !=null) {
+                val screenshotRequest = intent.getIntExtra("screenshotRequest", -1)!!
+                if (screenshotRequest == 1) {
 
-            val screenshotRequest = intent?.getIntExtra("screenshotRequest", -1)!!
-            if (screenshotRequest == 1) {
+                    val width = intent.getIntExtra("width", -1)
+                    val height = intent.getIntExtra("height", -1)
+                    val windowX = intent.getIntExtra("windowX", -1)
+                    val windowY = intent.getIntExtra("windowY", -1)
+                    windowBorderSize = intent.getIntExtra("borderSize", -1)
 
-                val width = intent.getIntExtra("width", -1)
-                val height = intent.getIntExtra("height", -1)
-                val windowX = intent.getIntExtra("windowX", -1)
-                val windowY = intent.getIntExtra("windowY", -1)
-                windowBorderSize = intent.getIntExtra("borderSize", -1)
-
-                Log.d(TAG, "got screen shot request")
-                val date: String =
-                    SimpleDateFormat("yyyy-MM-dd-hh-mm-ss", Locale.getDefault()).format(Date())
-                val file = File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                        .toString(), date + ".png"
-                )
-                saveScreenshot(file, width, height, windowX, windowY)
-                return super.onStartCommand(intent, flags, startId)
-            }
-
-            resultCode = intent?.getIntExtra("resultCode", -1)!!
-            resultData = intent.getParcelableExtra<Intent>("resultIntent")!!
-
-            mediaProjectionManager =
-                getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-            mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, resultData)
-
-            val cb: MediaProjection.Callback = object : MediaProjection.Callback() {
-                override fun onStop() {
-                    vDisplay.release()
+                    Log.d(TAG, "got screen shot request")
+                    val date: String =
+                        SimpleDateFormat("yyyy-MM-dd-hh-mm-ss", Locale.getDefault()).format(Date())
+                    val file = File(
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                            .toString(), date + ".png"
+                    )
+                    saveScreenshot(file, width, height, windowX, windowY)
+                    return super.onStartCommand(intent, flags, startId)
                 }
+
+                resultCode = intent.getIntExtra("resultCode", -1)
+                resultData = intent.getParcelableExtra<Intent>("resultIntent")!!
+
+                mediaProjectionManager =
+                    getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
+                mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, resultData)
+
+                val cb: MediaProjection.Callback = object : MediaProjection.Callback() {
+                    override fun onStop() {
+                        vDisplay.release()
+                    }
+                }
+                //todo make it api 14 complaint
+                val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+                val metrics = windowManager.maximumWindowMetrics
+
+                width = metrics.bounds.width()
+                height = metrics.bounds.height()
+                val MAX_IMAGES = 10
+
+                mImageReader =
+                    ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, MAX_IMAGES);
+
+
+                vDisplay = mediaProjection.createVirtualDisplay(
+                    "screenshot",
+                    width,
+                    height,
+                    resources.displayMetrics.densityDpi,
+                    VIRT_DISPLAY_FLAGS,
+                    mImageReader.getSurface(),
+                    null,
+                    null
+                )
+
+                handlerThread.start()
+                handler = Handler(handlerThread.looper)
+                mImageReader.setOnImageAvailableListener(this, handler)
+                mediaProjection.registerCallback(cb, null)
             }
-            //todo make it api 14 complaint
-            val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-            val metrics = windowManager.maximumWindowMetrics
-
-            width = metrics.bounds.width()
-            height = metrics.bounds.height()
-            val MAX_IMAGES = 10
-
-            mImageReader =
-                ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, MAX_IMAGES);
-
-
-            vDisplay = mediaProjection.createVirtualDisplay(
-                "screenshot",
-                width,
-                height,
-                resources.displayMetrics.densityDpi,
-                VIRT_DISPLAY_FLAGS,
-                mImageReader.getSurface(),
-                null,
-                null
-            )
-
-            handlerThread.start()
-            handler = Handler(handlerThread.looper)
-            mImageReader.setOnImageAvailableListener(this, handler)
-            mediaProjection.registerCallback(cb, null)
         }
         return super.onStartCommand(intent, flags, startId)
     }
