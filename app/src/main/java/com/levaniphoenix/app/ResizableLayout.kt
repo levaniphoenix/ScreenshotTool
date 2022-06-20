@@ -16,11 +16,8 @@ import androidx.core.view.GestureDetectorCompat
 import java.io.File
 
 class ResizableLayout : RelativeLayout  {
-
-    //todo make double tap work on the whole view
     private var windowLayoutParams: WindowManager.LayoutParams? = null
     private lateinit var mContext: Context
-    private val windowBorderSizeDp = 2
 
     private val TAG: String = ResizableLayout::class.java.getName()
     constructor(context: Context?) : super(context) {

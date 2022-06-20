@@ -2,11 +2,9 @@ package com.levaniphoenix.app.Views;
 
 import static android.content.Context.WINDOW_SERVICE;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
-import androidx.core.view.GestureDetectorCompat;
 import android.util.AttributeSet;
-import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,22 +45,13 @@ public class ResizeView extends LinearLayout implements View.OnTouchListener
         init(context);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void init(Context context)
     {
         this.context = context;
         windowManager = (WindowManager) this.context.getSystemService(WINDOW_SERVICE);
         this.setOnTouchListener(this);
     }
-
-//    @SuppressLint("ClickableViewAccessibility")
-//    @Override
-//    public boolean onTouchEvent(MotionEvent e)
-//    {
-//        mDetector.onTouchEvent(e);
-//        Log.d(TAG,"onTouchEvent");
-//
-//        return true;
-//    }
     public void passView(View rootView){
         this.rootView = rootView;
         params = rootView.getLayoutParams();

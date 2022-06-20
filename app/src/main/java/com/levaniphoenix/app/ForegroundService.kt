@@ -82,7 +82,7 @@ class ForegroundService : Service(), ImageReader.OnImageAvailableListener {
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        if(ACTION_SHUTDOWN.equals(intent?.getAction())){
+        if(ACTION_SHUTDOWN == intent?.action){
             stopForeground(true)
             stopSelf()
         }else {

@@ -1,6 +1,5 @@
 package com.levaniphoenix.app
 
-import android.R.attr
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
@@ -8,7 +7,6 @@ import android.media.projection.MediaProjectionManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.widget.Button
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -38,17 +36,6 @@ class MainActivity : AppCompatActivity() {
 //            startActivityForResult(mgr.createScreenCaptureIntent(), REQUEST_SCREENSHOT);
             resultLauncher.launch(mgr.createScreenCaptureIntent())
         }
-        //startService();
-    }
-
-    override fun onResume() {
-        super.onResume()
-        //startService();
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        stopService(Intent(this,ForegroundService::class.java))
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -62,7 +49,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // method for starting the service
-    fun startService(requestCode: Int, resultCode: Int, data: Intent?) {
+    private fun startService(requestCode: Int, resultCode: Int, data: Intent?) {
         val intent = Intent(this, ForegroundService::class.java)
             .putExtra("resultCode", resultCode)
             .putExtra("resultIntent", data)
@@ -81,7 +68,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // method to ask user to grant the Overlay permission
-    fun checkOverlayPermission() {
+    private fun checkOverlayPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (!Settings.canDrawOverlays(this)) {
                 // send user to the device settings
