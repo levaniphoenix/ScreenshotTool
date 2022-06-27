@@ -79,7 +79,6 @@ class ForegroundService : Service(), ImageReader.OnImageAvailableListener {
         //System.exit(0)
     }
     @SuppressLint("WrongConstant")
-    @RequiresApi(Build.VERSION_CODES.R)
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
         if(ACTION_SHUTDOWN == intent?.action){

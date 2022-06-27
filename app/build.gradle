@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.levaniphoenix.app"
-        minSdk 21
+        minSdk 30
         targetSdk 32
         versionCode 1
         versionName "1.0"
@@ -58,6 +58,4 @@ dependencies {
     implementation("com.atilika.kuromoji:kuromoji-ipadic:0.9.0")
 
     implementation 'cz.adaptech:tesseract4android:4.1.1'
-
-    implementation("androidx.window:window:1.1.0-alpha01")
 }
