@@ -239,6 +239,6 @@ class ForegroundService : Service(), ImageReader.OnImageAvailableListener {
     private fun buildPendingIntent(action: String): PendingIntent? {
         val i = Intent(this, javaClass)
         i.action = action
-        return PendingIntent.getService(this, 0, i, 0)
+        return PendingIntent.getService(this, 0, i, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
     }
 }
